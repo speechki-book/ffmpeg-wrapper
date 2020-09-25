@@ -142,3 +142,5 @@ cython_debug/
 # IntelliJ project files
 .idea
 *.iml
+
+.DS_Store
