@@ -1,0 +1,16 @@
+exclude: 'docs|node_modules|migrations|tests|generation_pb2|.git|.tox'
+
+repos:
+-   repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+    - id: black
+      language_version: python3.8
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+      - id: flake8
+        additional_dependencies: [
+          '-e', 'git+https://github.com/pycqa/pyflakes@1911c20#egg=pyflakes',
+          '-e', 'git+https://github.com/pycqa/pycodestyle@d219c68#egg=pycodestyle',
+        ]
