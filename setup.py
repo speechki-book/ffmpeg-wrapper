@@ -14,8 +14,8 @@ setup(
     description="wrapper for FFMPEG",  # Give a short description about your library
     author="Pavel Maltsev",  # Type in your name
     author_email="zeden123@gmail.com",  # Type in your E-Mail
-    url="https://github.com/speechki-book/ffmpeg_wrapper/",  # Provide either the link to your github or to your website
-    download_url="https://github.com/speechki-book/ffmpeg_wrapper/",  # I explain this later on
+    url="https://github.com/speechki-book/ffmpeg-wrapper",  # Provide either the link to your github or to your website
+    download_url="https://github.com/speechki-book/ffmpeg-wrapper",  # I explain this later on
     keywords=[
         "FFMPEG",
         "Python",
