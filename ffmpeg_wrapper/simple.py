@@ -76,8 +76,10 @@ def concat_ffmpeg_command(
     if background_path:
         background = background_filter(background_path, background_volume)
         background = f";{background}"
+        map_out = ""
     else:
         background = ""
+        map_out = "-map '[book]'"
 
     command = " ".join(
         ["ffmpeg", "-y"]
@@ -85,6 +87,7 @@ def concat_ffmpeg_command(
         + [
             "-filter_complex",
             f'"{concat_filter}{background}"',
+            map_out,
             "-ac",
             f"{channels}",
             output_path,
