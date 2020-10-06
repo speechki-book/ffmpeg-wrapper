@@ -13,7 +13,7 @@ def test_concatenate_command():
     background_volume = 0.3
     volume = 2.0
 
-    test_command = """ffmpeg -y -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex "concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest" -ac 2 complete_book.wav"""
+    test_command = """ffmpeg -y -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex "concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest"  -ac 2 complete_book.wav"""
 
     command = concat_ffmpeg_command(
         build_list=build_list,
@@ -22,7 +22,7 @@ def test_concatenate_command():
         background_volume=background_volume,
         volume=volume,
     )
-    print(command)
+
     assert command == test_command
 
 
