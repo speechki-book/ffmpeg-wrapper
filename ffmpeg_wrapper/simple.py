@@ -259,7 +259,10 @@ def duration(file_path: str) -> float:
     if status:
         raise FFMPEGWrapperException(out, er, return_code=status)
 
-    return float(out)
+    try:
+        return float(out)
+    except ValueError:
+        return 0.0
 
 
 def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
