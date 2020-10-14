@@ -198,6 +198,7 @@ def execute_command(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
+            shell=True,
         )
         out, err = process_handle.communicate()
         out_str: str = out.decode("utf-8")
