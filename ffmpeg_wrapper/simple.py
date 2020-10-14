@@ -127,7 +127,7 @@ def convert_ffmpeg_command(
     ]
 
 
-def duration_ffmpeg_command(file_path: str) -> List[str]:
+def duration_ffmpeg_command(file_path: str) -> str:
     """
     Build command for ffmpeg which return audio file duration.
 
@@ -135,20 +135,22 @@ def duration_ffmpeg_command(file_path: str) -> List[str]:
     :return: completed ffmpeg command for shell
     """
 
-    return [
-        "ffprobe",
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-i",
-        file_path,
-        "-show_entries",
-        "format=duration",
-        "-v",
-        "quiet",
-        "-of",
-        'csv="p=0"',
-    ]
+    return " ".join(
+        [
+            "ffprobe",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            file_path,
+            "-show_entries",
+            "format=duration",
+            "-v",
+            "quiet",
+            "-of",
+            'csv="p=0"',
+        ]
+    )
 
 
 def silent_ffmpeg_command(
