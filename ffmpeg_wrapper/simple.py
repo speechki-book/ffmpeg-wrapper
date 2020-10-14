@@ -59,7 +59,7 @@ def concat_ffmpeg_command(
     background_path: Optional[str] = None,
     background_volume: float = 1.0,
     volume: float = 1.0,
-) -> str:
+) -> List[str]:
     """
     Build command for ffmpeg which concatenate book parts to book and add background audio if need.
 
@@ -81,10 +81,10 @@ def concat_ffmpeg_command(
         background = ""
         map_out = "-map '[book]'"
 
-    command = " ".join(
-        ["ffmpeg", "-y"]
-        + concat_files
-        + [
+    command = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
+    command.extend(concat_files)
+    command.extend(
+        [
             "-filter_complex",
             f'"{concat_filter}{background}"',
             map_out,
@@ -101,7 +101,7 @@ def convert_ffmpeg_command(
     input_info: Tuple[str, str, str],
     output_info: Tuple[str, str, str],
     bit_rate: int,
-) -> str:
+) -> List[str]:
     """
     Build command for ffmpeg which convert from source format to selected format.
 
@@ -114,18 +114,20 @@ def convert_ffmpeg_command(
     input_file_name, input_file_path, input_file_format = input_info
     output_file_name, output_file_path, output_file_format = output_info
 
-    command = [
+    return [
         "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
         "-i",
         input_file_path,
         "-b:a",
         f"{bit_rate}",
         output_file_path,
     ]
-    return " ".join(command)
 
 
-def duration_ffmpeg_command(file_path: str) -> str:
+def duration_ffmpeg_command(file_path: str) -> List[str]:
     """
     Build command for ffmpeg which return audio file duration.
 
@@ -133,10 +135,25 @@ def duration_ffmpeg_command(file_path: str) -> str:
     :return: completed ffmpeg command for shell
     """
 
-    return f"""ffprobe -i {file_path} -show_entries format=duration -v quiet -of csv="p=0" """
+    return [
+        "ffprobe",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        file_path,
+        "-show_entries",
+        "format=duration",
+        "-v",
+        "quiet",
+        "-of",
+        'csv="p=0"',
+    ]
 
 
-def silent_ffmpeg_command(duration_value: float, output_path: str) -> str:
+def silent_ffmpeg_command(
+    duration_value: float, output_path: str
+) -> List[str]:
     """
     Build command for ffmpeg which create silent audio with selected duration.
 
@@ -145,7 +162,23 @@ def silent_ffmpeg_command(duration_value: float, output_path: str) -> str:
     :return: completed ffmpeg command for shell
     """
 
-    return f"ffmpeg -f lavfi -i anullsrc -t {duration_value:.3f} -ar 48000 -ac 1 {output_path}"
+    return [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        "anullsrc",
+        "-t",
+        f"{duration_value:.3f}",
+        "-ar",
+        "48000",
+        "-ac",
+        "1",
+        output_path,
+    ]
 
 
 def execute_command(
@@ -164,7 +197,7 @@ def execute_command(
             command_func(*args, **kwargs),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            shell=True,
+            stdin=subprocess.PIPE,
         )
         out, err = process_handle.communicate()
         out_str: str = out.decode("utf-8")

@@ -13,7 +13,7 @@ def test_concatenate_command():
     background_volume = 0.3
     volume = 2.0
 
-    test_command = """ffmpeg -y -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex "concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest"  -ac 2 complete_book.wav"""
+    test_command = """ffmpeg -y -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex "concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest"  -ac 2 complete_book.wav"""
 
     command = concat_ffmpeg_command(
         build_list=build_list,
@@ -23,7 +23,7 @@ def test_concatenate_command():
         volume=volume,
     )
 
-    assert command == test_command
+    assert " ".join(command) == test_command
 
 
 def test_convert_command():
@@ -39,35 +39,31 @@ def test_convert_command():
     )
     bit_rate: int = 256
 
-    test_command = (
-        """ffmpeg -i /tmp/complete_book.wav -b:a 256 /tmp/converted_book.mp3"""
-    )
+    test_command = """ffmpeg -hide_banner -loglevel error -i /tmp/complete_book.wav -b:a 256 /tmp/converted_book.mp3"""
 
     command = convert_ffmpeg_command(
         input_info=input_info, output_info=output_info, bit_rate=bit_rate
     )
 
-    assert command == test_command
+    assert " ".join(command) == test_command
 
 
 def test_duration_command():
     file_path: str = "/tmp/audio.wav"
 
-    test_command = """ffprobe -i /tmp/audio.wav -show_entries format=duration -v quiet -of csv="p=0" """
+    test_command = 'ffprobe -hide_banner -loglevel error -i /tmp/audio.wav -show_entries format=duration -v quiet -of csv="p=0"'
 
     command = duration_ffmpeg_command(file_path)
 
-    assert command == test_command
+    assert " ".join(command) == test_command
 
 
 def test_silent_command():
     duration_value: float = 0.85
     output_path: str = "/tmp/pause.wav"
 
-    test_command = (
-        "ffmpeg -f lavfi -i anullsrc -t 0.850 -ar 48000 -ac 1 /tmp/pause.wav"
-    )
+    test_command = "ffmpeg -hide_banner -loglevel error -f lavfi -i anullsrc -t 0.850 -ar 48000 -ac 1 /tmp/pause.wav"
 
     command = silent_ffmpeg_command(duration_value, output_path)
 
-    assert command == test_command
+    assert " ".join(command) == test_command
