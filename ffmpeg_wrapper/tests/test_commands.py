@@ -55,7 +55,7 @@ def test_duration_command():
 
     command = duration_ffmpeg_command(file_path)
 
-    assert " ".join(command) == test_command
+    assert command == test_command
 
 
 def test_silent_command():
