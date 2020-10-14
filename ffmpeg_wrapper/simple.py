@@ -27,7 +27,11 @@ def concat_command(
     :return: - tuple 0 - list files 1 - concatenate filter
     """
 
-    concat_files = [f"-i {part_path}" for part_path in build_list]
+    concat_files = []
+    for part_path in build_list:
+        concat_files.append("-i")
+        concat_files.append(part_path)
+
     count = len(build_list)
 
     volume_filter = f",volume={volume:.1f}"
@@ -76,23 +80,16 @@ def concat_ffmpeg_command(
     if background_path:
         background = background_filter(background_path, background_volume)
         background = f";{background}"
-        map_out = ""
+        map_out = []
     else:
         background = ""
-        map_out = "-map '[book]'"
+        map_out = ["-map", "[book]"]
 
-    command = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
+    command = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
     command.extend(concat_files)
-    command.extend(
-        [
-            "-filter_complex",
-            f'"{concat_filter}{background}"',
-            map_out,
-            "-ac",
-            f"{channels}",
-            output_path,
-        ]
-    )
+    command.extend(["-filter_complex", f"{concat_filter}{background}"])
+    command.extend(map_out)
+    command.extend(["-ac", f"{channels}", "-y", output_path])
 
     return command
 
@@ -127,7 +124,7 @@ def convert_ffmpeg_command(
     ]
 
 
-def duration_ffmpeg_command(file_path: str) -> str:
+def duration_ffmpeg_command(file_path: str) -> List[str]:
     """
     Build command for ffmpeg which return audio file duration.
 
@@ -135,22 +132,20 @@ def duration_ffmpeg_command(file_path: str) -> str:
     :return: completed ffmpeg command for shell
     """
 
-    return " ".join(
-        [
-            "ffprobe",
-            "-hide_banner",
-            "-loglevel",
-            "error",
-            "-i",
-            file_path,
-            "-show_entries",
-            "format=duration",
-            "-v",
-            "quiet",
-            "-of",
-            'csv="p=0"',
-        ]
-    )
+    return [
+        "ffprobe",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        file_path,
+        "-show_entries",
+        "format=duration",
+        "-v",
+        "quiet",
+        "-of",
+        "csv=p=0",
+    ]
 
 
 def silent_ffmpeg_command(
@@ -200,7 +195,6 @@ def execute_command(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
-            shell=True,
         )
         out, err = process_handle.communicate()
         out_str: str = out.decode("utf-8")
