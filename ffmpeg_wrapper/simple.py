@@ -118,8 +118,8 @@ def convert_ffmpeg_command(
         "error",
         "-i",
         input_file_path,
-        "-b:a",
-        f"{bit_rate}",
+        "-ab",
+        f"{bit_rate}k",
         output_file_path,
     ]
 
