@@ -23,7 +23,6 @@ def test_concatenate_command():
         volume=volume,
     )
 
-    print(" ".join(command))
     assert " ".join(command) == test_command
 
 
@@ -40,7 +39,7 @@ def test_convert_command():
     )
     bit_rate: int = 256
 
-    test_command = """ffmpeg -hide_banner -loglevel error -i /tmp/complete_book.wav -b:a 256 /tmp/converted_book.mp3"""
+    test_command = """ffmpeg -hide_banner -loglevel error -i /tmp/complete_book.wav -ab 256k /tmp/converted_book.mp3"""
 
     command = convert_ffmpeg_command(
         input_info=input_info, output_info=output_info, bit_rate=bit_rate
