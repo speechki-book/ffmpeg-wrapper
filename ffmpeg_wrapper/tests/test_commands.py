@@ -39,7 +39,7 @@ def test_convert_command():
     )
     bit_rate: int = 256
 
-    test_command = """ffmpeg -hide_banner -loglevel error -i /tmp/complete_book.wav -ab 256k /tmp/converted_book.mp3"""
+    test_command = """ffmpeg -hide_banner -loglevel error -i /tmp/complete_book.wav -ab 256k -y /tmp/converted_book.mp3"""
 
     command = convert_ffmpeg_command(
         input_info=input_info, output_info=output_info, bit_rate=bit_rate
@@ -62,7 +62,7 @@ def test_silent_command():
     duration_value: float = 0.85
     output_path: str = "/tmp/pause.wav"
 
-    test_command = "ffmpeg -hide_banner -loglevel error -f lavfi -i anullsrc -t 0.850 -ar 48000 -ac 1 /tmp/pause.wav"
+    test_command = "ffmpeg -hide_banner -loglevel error -f lavfi -i anullsrc -t 0.850 -ar 48000 -ac 1 -y /tmp/pause.wav"
 
     command = silent_ffmpeg_command(duration_value, output_path)
 

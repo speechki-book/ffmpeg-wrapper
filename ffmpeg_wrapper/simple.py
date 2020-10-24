@@ -120,6 +120,7 @@ def convert_ffmpeg_command(
         input_file_path,
         "-ab",
         f"{bit_rate}k",
+        "-y",
         output_file_path,
     ]
 
@@ -174,6 +175,7 @@ def silent_ffmpeg_command(
         "48000",
         "-ac",
         "1",
+        "-y",
         output_path,
     ]
 
