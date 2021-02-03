@@ -111,7 +111,8 @@ def concat_ffmpeg_command(
         background = f";{background}"
         map_out = []
     else:
-        return simple_concat_ffmpeg_command(build_list, output_path, channels)
+        background = ""
+        map_out = ["-map", "[book]"]
 
     concat_files, concat_filter = concat_command(build_list, volume)
 
