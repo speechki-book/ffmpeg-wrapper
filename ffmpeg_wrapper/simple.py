@@ -56,6 +56,36 @@ def background_filter(background_path: str, background_volume: float) -> str:
     )
 
 
+def simple_concat_ffmpeg_command(
+    build_list: List[str],
+    output_path: str,
+    channels: int = 2,
+) -> List[str]:
+    """
+    Simple concatenate audios
+
+    :param build_list: list book parts audio path
+    :param output_path: path to completed audio
+    :param channels: the number of channels for the completed audio
+    :return: completed ffmpeg command for shell
+    """
+
+    command = [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+    ]
+
+    for part_path in build_list:
+        command.append("-i")
+        command.append(part_path)
+
+    command.extend(["-ac", f"{channels}", "-y", output_path])
+
+    return command
+
+
 def concat_ffmpeg_command(
     build_list: List[str],
     output_path: str,
@@ -76,14 +106,14 @@ def concat_ffmpeg_command(
     :return: completed ffmpeg command for shell
     """
 
-    concat_files, concat_filter = concat_command(build_list, volume)
     if background_path:
         background = background_filter(background_path, background_volume)
         background = f";{background}"
         map_out = []
     else:
-        background = ""
-        map_out = ["-map", "[book]"]
+        return simple_concat_ffmpeg_command(build_list, output_path, channels)
+
+    concat_files, concat_filter = concat_command(build_list, volume)
 
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
     command.extend(concat_files)

@@ -26,6 +26,20 @@ def test_concatenate_command():
     assert " ".join(command) == test_command
 
 
+def test_simple_concatenate_command():
+    build_list = ["1.wav", "2.wav", "3.wav", "4.wav"]
+    output_path = "complete_book.wav"
+
+    command = concat_ffmpeg_command(
+        build_list=build_list,
+        output_path=output_path,
+    )
+
+    test_command = """ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -ac 2 -y complete_book.wav"""
+
+    assert " ".join(command) == test_command
+
+
 def test_convert_command():
     input_info = (
         "complete_book.wav",
