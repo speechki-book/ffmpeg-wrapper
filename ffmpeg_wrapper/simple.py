@@ -16,9 +16,7 @@ class FFMPEGWrapperException(Exception):
         self.er = er
 
 
-def concat_command(
-    build_list: List[str], volume: float
-) -> Tuple[List[str], str]:
+def concat_command(build_list: List[str], volume: float) -> Tuple[List[str], str]:
     """
     Part of command for concatenate book parts to book.
 
@@ -93,10 +91,12 @@ def concat_ffmpeg_command(
     background_path: Optional[str] = None,
     background_volume: float = 1.0,
     volume: float = 1.0,
+    sample_rate: int = 48000,
 ) -> List[str]:
     """
     Build command for ffmpeg which concatenate book parts to book and add background audio if need.
 
+    :param sample_rate: sample rate
     :param build_list: list book parts audio path
     :param output_path: path to completed audio
     :param channels: the number of channels for the completed audio
@@ -120,7 +120,7 @@ def concat_ffmpeg_command(
     command.extend(concat_files)
     command.extend(["-filter_complex", f"{concat_filter}{background}"])
     command.extend(map_out)
-    command.extend(["-ac", f"{channels}", "-y", output_path])
+    command.extend(["-ac", f"{channels}", "-ar", f"{sample_rate}", "-y", output_path])
 
     return command
 
@@ -180,9 +180,7 @@ def duration_ffmpeg_command(file_path: str) -> List[str]:
     ]
 
 
-def silent_ffmpeg_command(
-    duration_value: float, output_path: str
-) -> List[str]:
+def silent_ffmpeg_command(duration_value: float, output_path: str) -> List[str]:
     """
     Build command for ffmpeg which create silent audio with selected duration.
 
@@ -211,9 +209,7 @@ def silent_ffmpeg_command(
     ]
 
 
-def execute_command(
-    command_func: Callable, *args, **kwargs
-) -> Tuple[int, str, str]:
+def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, str]:
     """
     Executor for all commands. Execute command in subprocess and wait complete task.
 
@@ -246,9 +242,11 @@ def concatenate(
     background_path: Optional[str] = None,
     background_volume: Optional[float] = None,
     volume: Optional[float] = None,
+    sample_rate: int = 48000,
 ) -> Tuple[int, str, str]:
     """
 
+    :param sample_rate: sample rate
     :param build_list: list book parts audio path
     :param output_path: path to completed audio
     :param channels: the number of channels for the completed audio
@@ -266,6 +264,7 @@ def concatenate(
         background_path=background_path,
         background_volume=background_volume,
         volume=volume,
+        sample_rate=sample_rate,
     )
 
     status, out, er = res
@@ -313,9 +312,7 @@ def duration(file_path: str) -> float:
     :return: if command success complete then return audio duration else return None
     """
 
-    res: Tuple[int, str, str] = execute_command(
-        duration_ffmpeg_command, file_path=file_path
-    )
+    res: Tuple[int, str, str] = execute_command(duration_ffmpeg_command, file_path=file_path)
 
     status, out, er = res
 
