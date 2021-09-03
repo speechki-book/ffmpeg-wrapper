@@ -99,3 +99,12 @@ Executed command:
 ```shell script
 ffprobe -i /tmp/audio.wav -show_entries format=duration -v quiet -of csv="p=0" 
 ```
+
+
+## Develop facilities
+
+To run tests and codestyle analyzers just execute command 
+```shell
+tox -e py39
+```
+and it will run `black`, `flake8` and `pytest`. Please do not commit anything before tox is green.
