@@ -3,6 +3,7 @@ from ffmpeg_wrapper.simple import (
     convert_ffmpeg_command,
     duration_ffmpeg_command,
     silent_ffmpeg_command,
+    normalize_ffmpeg_command,
 )
 
 
@@ -85,3 +86,27 @@ def test_silent_command():
     command = silent_ffmpeg_command(duration_value, output_path)
 
     assert " ".join(command) == test_command
+
+
+def test_normalize_command():
+    input_path = "a.wav"
+    output_path = "b.wav"
+    peak = -3.0
+    rms_level = -18.0
+    loudness_range_target = 18
+    sampling_frequency = 44100
+
+    command = normalize_ffmpeg_command(
+        input_path=input_path,
+        output_path=output_path,
+        peak=peak,
+        rms_level=rms_level,
+        loudness_range_target=loudness_range_target,
+        sampling_frequency=sampling_frequency,
+    )
+
+    expected_command = (
+        "ffmpeg -hide_banner -loglevel error -i a.wav -af loudnorm=I=-18.0:TP=-3.0:LRA=18 -ar 44100 b.wav"
+    )
+
+    assert " ".join(command) == expected_command

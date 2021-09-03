@@ -209,6 +209,41 @@ def silent_ffmpeg_command(duration_value: float, output_path: str) -> List[str]:
     ]
 
 
+def normalize_ffmpeg_command(
+    input_path: str,
+    output_path: str,
+    peak: float,
+    rms_level: float,
+    loudness_range_target: float,
+    sampling_frequency: int,
+) -> List[str]:
+    """
+    Build command for ffmpeg which normalizes audio with selected level
+
+    :param input_path: path where input file is
+    :param output_path: path to output file
+    :param peak: value of peak volume
+    :param rms_level: value of root mean square of loudness
+    :param loudness_range_target: value of target loudness range
+    :param sampling_frequency: frequency of sampling in Hz, for example 44100
+    :return: completed ffmpeg command for shell
+    """
+
+    return [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        input_path,
+        "-af",
+        f"loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}",
+        "-ar",
+        f"{sampling_frequency}",
+        output_path,
+    ]
+
+
 def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, str]:
     """
     Executor for all commands. Execute command in subprocess and wait complete task.
@@ -243,6 +278,9 @@ def concatenate(
     background_volume: Optional[float] = None,
     volume: Optional[float] = None,
     sample_rate: int = 48000,
+    peak: float = -3.0,
+    rms_level: float = -18.0,
+    loudness_range_target: float = 18.0,
 ) -> Tuple[int, str, str]:
     """
 
@@ -253,6 +291,9 @@ def concatenate(
     :param background_path: path to background audio
     :param background_volume: value for volume for background audio
     :param volume: value for volume for main audio
+    :param peak: value of peak volume of concatenated audio
+    :param rms_level: value of root mean square of loduness in concatenated audio
+    :param loudness_range_target: value of target loudness range
     :return: tuple which contain return code, output and error message
     """
 
@@ -266,13 +307,24 @@ def concatenate(
         volume=volume,
         sample_rate=sample_rate,
     )
-
-    status, out, er = res
-
+    status, file_path, er = res
     if status:
-        raise FFMPEGWrapperException(out, er, return_code=status)
+        raise FFMPEGWrapperException(file_path, er, return_code=status)
 
-    return status, out, er
+    res = execute_command(
+        normalize_ffmpeg_command,
+        input_path=file_path,
+        output_path=file_path,
+        peak=peak,
+        rms_level=rms_level,
+        loudness_range_target=loudness_range_target,
+        sampling_frequency=sample_rate,
+    )
+    status, file_path, er = res
+    if status:
+        raise FFMPEGWrapperException(file_path, er, return_code=status)
+
+    return status, file_path, er
 
 
 def convert(
