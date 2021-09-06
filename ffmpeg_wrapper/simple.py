@@ -92,6 +92,9 @@ def concat_ffmpeg_command(
     background_volume: float = 1.0,
     volume: float = 1.0,
     sample_rate: int = 48000,
+    peak: float = -3.0,
+    rms_level: float = -18.0,
+    loudness_range_target: float = 18.0,
 ) -> List[str]:
     """
     Build command for ffmpeg which concatenate book parts to book and add background audio if need.
@@ -103,26 +106,47 @@ def concat_ffmpeg_command(
     :param background_path: path to background audio
     :param background_volume: value for volume for background audio
     :param volume: value for volume for main audio
+    :param peak: allowed peak volume
+    :param rms_level: allowed root mean square of audio volume
+    :param loudness_range_target: allowed range of loudness of audio volume
     :return: completed ffmpeg command for shell
     """
 
     if background_path:
         background = background_filter(background_path, background_volume)
         background = f";{background}"
-        map_out = []
+        map_out = ["-map", "[book0]"]
+        loudnorm = loudnorm_filter(rms_level, peak, loudness_range_target, background=True)
     else:
         background = ""
         map_out = ["-map", "[book]"]
+        loudnorm = loudnorm_filter(rms_level, peak, loudness_range_target, background=False)
 
     concat_files, concat_filter = concat_command(build_list, volume)
 
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
     command.extend(concat_files)
-    command.extend(["-filter_complex", f"{concat_filter}{background}"])
+    command.extend(["-filter_complex", f"{concat_filter}{background}{loudnorm}"])
     command.extend(map_out)
     command.extend(["-ac", f"{channels}", "-ar", f"{sample_rate}", "-y", output_path])
-
+    print(" ".join(command))
     return command
+
+
+def loudnorm_filter(rms_level: float, peak: float, loudness_range_target: float, background: bool) -> str:
+    """
+    Build ffmpeg filter which normalizes audio stream loudness.
+
+    :param rms_level: allowed root mean square of audio volume
+    :param peak: allowed peak volume
+    :param loudness_range_target: allowed range of loudness of audio volume
+    :param background: if True then background soun
+    :return: command for shell
+    """
+    if not background:
+        return f";[book]loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book]"
+
+    return f"[book0];[book0]loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book0]"
 
 
 def convert_ffmpeg_command(
@@ -274,9 +298,9 @@ def concatenate(
     build_list: List[str],
     output_path: str,
     channels: int = 2,
-    background_path: Optional[str] = None,
-    background_volume: Optional[float] = None,
-    volume: Optional[float] = None,
+    background_path: str = "",
+    background_volume: float = 0.0,
+    volume: float = 1.0,
     sample_rate: int = 48000,
     peak: float = -3.0,
     rms_level: float = -18.0,
@@ -306,19 +330,9 @@ def concatenate(
         background_volume=background_volume,
         volume=volume,
         sample_rate=sample_rate,
-    )
-    status, file_path, er = res
-    if status:
-        raise FFMPEGWrapperException(file_path, er, return_code=status)
-
-    res = execute_command(
-        normalize_ffmpeg_command,
-        input_path=file_path,
-        output_path=file_path,
         peak=peak,
         rms_level=rms_level,
         loudness_range_target=loudness_range_target,
-        sampling_frequency=sample_rate,
     )
     status, file_path, er = res
     if status:
