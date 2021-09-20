@@ -1,4 +1,5 @@
 import subprocess
+import json
 from subprocess import CalledProcessError
 from typing import List, Optional, Tuple, Callable
 
@@ -277,6 +278,12 @@ def normalize_ffmpeg_command(
     ]
 
 
+def volumedetect_command(path_to_file: str) -> list[str]:
+    return [
+        "ffmpeg", "-i", path_to_file, "-af", "volumedetect", "-vn", "-sn", "-dn", "-f", "null", "/dev/null",
+    ]
+
+
 def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, str]:
     """
     Executor for all commands. Execute command in subprocess and wait complete task.
@@ -424,3 +431,22 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
         raise FFMPEGWrapperException(out, er, return_code=status)
 
     return status, out, er
+
+
+def volumedetect(path_to_file: str) -> Tuple[int, str, str, str]:
+    status, out, er = execute_command(volumedetect_command, path_to_file=path_to_file)
+
+    if status:
+        raise FFMPEGWrapperException(out, er, return_code=status)
+
+    rows = er.split("\n")
+    if rows[-1] == "":
+        rows.pop(-1)
+    result = {
+        "root_mean_square": rows[-3].split(" ")[-2],
+        "max_volume": rows[-2].split(" ")[-2],
+        "histogram_0db": rows[-1].split(" ")[-1],
+    }
+    result_as_json = json.dumps(result)
+
+    return status, out, er, result_as_json
