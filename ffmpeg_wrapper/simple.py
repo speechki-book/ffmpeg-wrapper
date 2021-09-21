@@ -281,7 +281,7 @@ def normalize_ffmpeg_command(
     ]
 
 
-def volume_detect_command(path_to_file: str) -> list[str]:
+def volume_detect_command(path_to_file: str) -> List[str]:
     return [
         "ffmpeg",
         "-i",
