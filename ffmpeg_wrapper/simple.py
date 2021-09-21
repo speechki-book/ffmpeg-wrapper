@@ -16,6 +16,10 @@ class FFMPEGWrapperException(Exception):
         self.er = er
 
 
+class FFMPEGWrapperParsingException(Exception):
+    pass
+
+
 def concat_command(build_list: List[str], volume: float) -> Tuple[List[str], str]:
     """
     Part of command for concatenate book parts to book.
@@ -442,22 +446,20 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
     return status, out, er
 
 
-def volume_detect(path_to_file: str) -> Tuple[int, str, str, dict[str, Union[float, int]]]:
+def volume_detect(path_to_file: str) -> dict[str, Union[float, int]]:
     status, out, er = execute_command(volume_detect_command, path_to_file=path_to_file)
-
     if status:
         raise FFMPEGWrapperException(out, er, return_code=status)
 
-    rows = er.split("\n")
-    if rows[-1] == "":
-        rows.pop(-1)
+    rows = er.split("\n")[-5:]
     try:
         result = {
-            "root_mean_square": float(rows[-3].split(" ")[-2]),
-            "max_volume": float(rows[-2].split(" ")[-2]),
-            "histogram_0db": int(rows[-1].split(" ")[-1]),
+            # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] mean_volume: -16.7 dB'
+            "root_mean_square": float(rows[1].split(" ")[-2]),
+            # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] max_volume: -0.0 dB'
+            "max_volume": float(rows[2].split(" ")[-2]),
         }
-    except Exception:  # noqa
-        result = {}
+    except (KeyError, ValueError, IndexError) as e:
+        raise FFMPEGWrapperParsingException(f"Error occurred while parsing FFMPEG output") from e
 
-    return status, out, er, result
+    return result
