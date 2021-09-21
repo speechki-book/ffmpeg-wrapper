@@ -1,7 +1,6 @@
 import subprocess
-import json
 from subprocess import CalledProcessError
-from typing import List, Optional, Tuple, Callable
+from typing import List, Optional, Tuple, Callable, Union
 
 
 class FFMPEGWrapperException(Exception):
@@ -443,7 +442,7 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
     return status, out, er
 
 
-def volume_detect(path_to_file: str) -> Tuple[int, str, str, str]:
+def volume_detect(path_to_file: str) -> Tuple[int, str, str, dict[str, Union[float, int]]]:
     status, out, er = execute_command(volume_detect_command, path_to_file=path_to_file)
 
     if status:
@@ -452,11 +451,13 @@ def volume_detect(path_to_file: str) -> Tuple[int, str, str, str]:
     rows = er.split("\n")
     if rows[-1] == "":
         rows.pop(-1)
-    result = {
-        "root_mean_square": rows[-3].split(" ")[-2],
-        "max_volume": rows[-2].split(" ")[-2],
-        "histogram_0db": rows[-1].split(" ")[-1],
-    }
-    result_as_json = json.dumps(result)
+    try:
+        result = {
+            "root_mean_square": float(rows[-3].split(" ")[-2]),
+            "max_volume": float(rows[-2].split(" ")[-2]),
+            "histogram_0db": int(rows[-1].split(" ")[-1]),
+        }
+    except Exception:  # noqa
+        result = {}
 
-    return status, out, er, result_as_json
+    return status, out, er, result
