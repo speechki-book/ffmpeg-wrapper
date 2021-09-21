@@ -16,6 +16,10 @@ class FFMPEGWrapperException(Exception):
         self.er = er
 
 
+class FFMPEGWrapperParsingException(Exception):
+    pass
+
+
 def concat_command(build_list: List[str], volume: float) -> Tuple[List[str], str]:
     """
     Part of command for concatenate book parts to book.
@@ -277,6 +281,22 @@ def normalize_ffmpeg_command(
     ]
 
 
+def volume_detect_command(path_to_file: str) -> list[str]:
+    return [
+        "ffmpeg",
+        "-i",
+        path_to_file,
+        "-af",
+        "volumedetect",
+        "-vn",
+        "-sn",
+        "-dn",
+        "-f",
+        "null",
+        "/dev/null",
+    ]
+
+
 def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, str]:
     """
     Executor for all commands. Execute command in subprocess and wait complete task.
@@ -424,3 +444,24 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
         raise FFMPEGWrapperException(out, er, return_code=status)
 
     return status, out, er
+
+
+def volume_detect(path_to_file: str) -> dict[str, float]:
+    status, out, er = execute_command(volume_detect_command, path_to_file=path_to_file)
+    if status:
+        raise FFMPEGWrapperException(out, er, return_code=status)
+
+    rows = (r for r in er.split("\n") if "Parsed_volumedetect" in r)
+    result = {}
+    try:
+        for r in rows:
+            if "mean_volume:" in r:
+                # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] mean_volume: -16.7 dB'
+                result["root_mean_square"] = float(r.split(" ")[-2])
+            if "max_volume:" in r:
+                # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] max_volume: -0.0 dB'
+                result["max_volume"] = float(r.split(" ")[-2])
+    except (KeyError, IndexError, AttributeError) as e:
+        raise FFMPEGWrapperParsingException("Error occurred while parsing FFMPEG output") from e
+
+    return result
