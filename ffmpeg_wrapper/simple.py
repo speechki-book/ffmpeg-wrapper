@@ -451,7 +451,7 @@ def volume_detect(path_to_file: str) -> dict[str, float]:
     if status:
         raise FFMPEGWrapperException(out, er, return_code=status)
 
-    rows = [r for r in er.split("\n") if "Parsed_volumedetect" in r]
+    rows = (r for r in er.split("\n") if "Parsed_volumedetect" in r)
     result = {}
     try:
         for r in rows:
