@@ -452,14 +452,16 @@ def volume_detect(path_to_file: str) -> dict[str, Union[float, int]]:
         raise FFMPEGWrapperException(out, er, return_code=status)
 
     rows = [r for r in er.split("\n") if "Parsed_volumedetect" in r]
+    result = {}
     try:
-        result = {
-            # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] mean_volume: -16.7 dB'
-            "root_mean_square": float(rows[1].split(" ")[-2]),
-            # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] max_volume: -0.0 dB'
-            "max_volume": float(rows[2].split(" ")[-2]),
-        }
-    except (KeyError, ValueError, IndexError) as e:
+        for r in rows:
+            if "mean_volume:" in r:
+                # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] mean_volume: -16.7 dB'
+                result["root_mean_square"] = float(r.split(" ")[-2])
+            if "max_volume:" in r:
+                # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] max_volume: -0.0 dB'
+                result["max_volume"] = float(r.split(" ")[-2])
+    except (KeyError, IndexError, AttributeError) as e:
         raise FFMPEGWrapperParsingException(f"Error occurred while parsing FFMPEG output") from e
 
     return result
