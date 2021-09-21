@@ -1,6 +1,6 @@
 import subprocess
 from subprocess import CalledProcessError
-from typing import List, Optional, Tuple, Callable, Union
+from typing import List, Optional, Tuple, Callable
 
 
 class FFMPEGWrapperException(Exception):
@@ -462,6 +462,6 @@ def volume_detect(path_to_file: str) -> dict[str, float]:
                 # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] max_volume: -0.0 dB'
                 result["max_volume"] = float(r.split(" ")[-2])
     except (KeyError, IndexError, AttributeError) as e:
-        raise FFMPEGWrapperParsingException(f"Error occurred while parsing FFMPEG output") from e
+        raise FFMPEGWrapperParsingException("Error occurred while parsing FFMPEG output") from e
 
     return result
