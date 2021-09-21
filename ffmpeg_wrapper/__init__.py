@@ -1,4 +1,4 @@
-from ffmpeg_wrapper.simple import convert, concatenate, duration, silent, volumedetect
+from ffmpeg_wrapper.simple import convert, concatenate, duration, silent, volume_detect
 
 
-__all__ = ["convert", "concatenate", "duration", "silent", "volumedetect"]
+__all__ = ["convert", "concatenate", "duration", "silent", "volume_detect"]

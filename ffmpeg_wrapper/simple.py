@@ -278,9 +278,19 @@ def normalize_ffmpeg_command(
     ]
 
 
-def volumedetect_command(path_to_file: str) -> list[str]:
+def volume_detect_command(path_to_file: str) -> list[str]:
     return [
-        "ffmpeg", "-i", path_to_file, "-af", "volumedetect", "-vn", "-sn", "-dn", "-f", "null", "/dev/null",
+        "ffmpeg",
+        "-i",
+        path_to_file,
+        "-af",
+        "volumedetect",
+        "-vn",
+        "-sn",
+        "-dn",
+        "-f",
+        "null",
+        "/dev/null",
     ]
 
 
@@ -433,8 +443,8 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
     return status, out, er
 
 
-def volumedetect(path_to_file: str) -> Tuple[int, str, str, str]:
-    status, out, er = execute_command(volumedetect_command, path_to_file=path_to_file)
+def volume_detect(path_to_file: str) -> Tuple[int, str, str, str]:
+    status, out, er = execute_command(volume_detect_command, path_to_file=path_to_file)
 
     if status:
         raise FFMPEGWrapperException(out, er, return_code=status)
