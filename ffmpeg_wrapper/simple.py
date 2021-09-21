@@ -446,7 +446,7 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
     return status, out, er
 
 
-def volume_detect(path_to_file: str) -> dict[str, Union[float, int]]:
+def volume_detect(path_to_file: str) -> dict[str, float]:
     status, out, er = execute_command(volume_detect_command, path_to_file=path_to_file)
     if status:
         raise FFMPEGWrapperException(out, er, return_code=status)
