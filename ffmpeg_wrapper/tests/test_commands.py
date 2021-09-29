@@ -16,7 +16,7 @@ def test_concatenate_command():
     background_volume = 0.3
     volume = 2.0
 
-    test_command = """ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest[book0] -map [book0] -ac 2 -ar 48000 -y complete_book.wav"""
+    test_command = """ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest -ac 2 -ar 48000 -y complete_book.wav"""
 
     command = concat_ffmpeg_command(
         build_list=BUILD_LIST,
@@ -50,7 +50,7 @@ def test_concatenate_loudnorm_command():
         loudness_range_target=loudness_range_target,
     )
 
-    test_command = f"""ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest[book0];[book0]loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book0] -map [book0] -ac 2 -ar 48000 -y complete_book.wav"""
+    test_command = f"""ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=2.0,loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest -ac 2 -ar 48000 -y complete_book.wav"""
 
     assert " ".join(command) == test_command
 
@@ -70,8 +70,7 @@ def test_simple_concatenate_command():
         loudness_range_target=loudness_range_target,
     )
 
-    test_command = f"""ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=1.0[book];[book]loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book] -map [book] -ac 2 -ar 48000 -y complete_book.wav"""
-
+    test_command = f"""ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=1.0,loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book] -map [book] -ac 2 -ar 48000 -y complete_book.wav"""
     assert " ".join(command) == test_command
 
 

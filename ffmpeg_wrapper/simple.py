@@ -20,7 +20,31 @@ class FFMPEGWrapperParsingException(Exception):
     pass
 
 
-def concat_command(build_list: List[str], volume: float) -> Tuple[List[str], str]:
+def loudnorm_filter(use_normalization: bool, rms_level: float, peak: float, loudness_range_target: float) -> str:
+    """
+    Build ffmpeg filter which normalizes audio stream loudness.
+
+    :param use_normalization: enable normalization
+    :param rms_level: allowed root mean square of audio volume
+    :param peak: allowed peak volume
+    :param loudness_range_target: allowed range of loudness of audio volume
+    :return: command for shell
+    """
+
+    if not use_normalization:
+        return ""
+
+    return f",loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}"
+
+
+def concat_command(
+    build_list: List[str],
+    volume: float,
+    use_normalization: bool,
+    rms_level: float,
+    peak: float,
+    loudness_range_target: float,
+) -> Tuple[List[str], str]:
     """
     Part of command for concatenate book parts to book.
 
@@ -38,7 +62,9 @@ def concat_command(build_list: List[str], volume: float) -> Tuple[List[str], str
 
     volume_filter = f",volume={volume:.1f}"
 
-    concat_filter = f"concat=n={count}:v=0:a=1{volume_filter}[book]"
+    loudnorm = loudnorm_filter(use_normalization, rms_level, peak, loudness_range_target)
+
+    concat_filter = f"concat=n={count}:v=0:a=1{volume_filter}{loudnorm}[book]"
 
     return concat_files, concat_filter
 
@@ -54,31 +80,8 @@ def background_filter(background_path: str, background_volume: float) -> str:
 
     return (
         f"amovie={background_path}:loop=0,asetpts=N/SR/TB,volume={background_volume:.1f}[background];"
-        f"[book][background]amix=duration=shortest[book0]"
+        f"[book][background]amix=duration=shortest"
     )
-
-
-def loudnorm_filter(
-    use_normalization: bool, rms_level: float, peak: float, loudness_range_target: float, background: bool
-) -> str:
-    """
-    Build ffmpeg filter which normalizes audio stream loudness.
-
-    :param use_normalization: enable normalization
-    :param rms_level: allowed root mean square of audio volume
-    :param peak: allowed peak volume
-    :param loudness_range_target: allowed range of loudness of audio volume
-    :param background: if True then background soun
-    :return: command for shell
-    """
-
-    if not use_normalization:
-        return ""
-
-    if not background:
-        return f";[book]loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book]"
-
-    return f";[book0]loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target}[book0]"
 
 
 def simple_concat_ffmpeg_command(
@@ -144,19 +147,18 @@ def concat_ffmpeg_command(
     if background_path:
         background = background_filter(background_path, background_volume)
         background = f";{background}"
-        map_out = ["-map", "[book0]"]
+        map_out = []
     else:
         background = ""
         map_out = ["-map", "[book]"]
 
-    use_background = bool(background_path)
-    loudnorm = loudnorm_filter(use_normalization, rms_level, peak, loudness_range_target, background=use_background)
-
-    concat_files, concat_filter = concat_command(build_list, volume)
+    concat_files, concat_filter = concat_command(
+        build_list, volume, use_normalization, rms_level, peak, loudness_range_target
+    )
 
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
     command.extend(concat_files)
-    command.extend(["-filter_complex", f"{concat_filter}{background}{loudnorm}"])
+    command.extend(["-filter_complex", f"{concat_filter}{background}"])
     command.extend(map_out)
     command.extend(["-ac", f"{channels}", "-ar", f"{sample_rate}", "-y", output_path])
     return command
