@@ -69,18 +69,20 @@ def concat_command(
     return concat_files, concat_filter
 
 
-def background_filter(background_path: str, background_volume: float) -> str:
+def background_filter(background_path: str, background_volume: float, is_normalize: bool = True) -> str:
     """
     Build ffmpeg filter which create stream with infinity stream audio from chosen file.
 
     :param background_path: path to source background audio
     :param background_volume: value for volume for background audio
+    :param is_normalize: flag for normalize or not audio
     :return: command for shell
     """
 
+    normalize = int(is_normalize)
     return (
         f"amovie={background_path}:loop=0,asetpts=N/SR/TB,volume={background_volume:.1f}[background];"
-        f"[book][background]amix=duration=shortest"
+        f"[book][background]amix=duration=shortest:normalize={normalize}"
     )
 
 
@@ -126,6 +128,7 @@ def concat_ffmpeg_command(
     peak: float = -3.0,
     rms_level: float = -18.0,
     loudness_range_target: float = 18.0,
+    is_normalize: bool = True,
 ) -> List[str]:
     """
     Build command for ffmpeg which concatenate book parts to book and add background audio if need.
@@ -141,11 +144,12 @@ def concat_ffmpeg_command(
     :param peak: allowed peak volume
     :param rms_level: allowed root mean square of audio volume
     :param loudness_range_target: allowed range of loudness of audio volume
+    :param is_normalize: flag for normalize or not audio
     :return: completed ffmpeg command for shell
     """
 
     if background_path:
-        background = background_filter(background_path, background_volume)
+        background = background_filter(background_path, background_volume, is_normalize)
         background = f";{background}"
         map_out = []
     else:
