@@ -373,6 +373,7 @@ def concatenate(
         peak=peak,
         rms_level=rms_level,
         loudness_range_target=loudness_range_target,
+        is_normalize=is_normalize,
     )
     status, file_path, er = res
     if status:
