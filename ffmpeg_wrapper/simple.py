@@ -341,6 +341,7 @@ def concatenate(
     peak: float = -3.0,
     rms_level: float = -18.0,
     loudness_range_target: float = 18.0,
+    is_normalize: bool = True,
 ) -> Tuple[int, str, str]:
     """
 
@@ -355,6 +356,7 @@ def concatenate(
     :param peak: value of peak volume of concatenated audio
     :param rms_level: value of root mean square of loduness in concatenated audio
     :param loudness_range_target: value of target loudness range
+    :param is_normalize: flag for normalize or not audio
     :return: tuple which contain return code, output and error message
     """
 
