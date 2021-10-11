@@ -44,12 +44,18 @@ def concat_command(
     rms_level: float,
     peak: float,
     loudness_range_target: float,
+    is_short: bool,
 ) -> Tuple[List[str], str]:
     """
     Part of command for concatenate book parts to book.
 
     :param build_list: list book parts audio path
     :param volume: setting for audio volume
+    :param use_normalization: enable normalization
+    :param peak: allowed peak volume
+    :param rms_level: allowed root mean square of audio volume
+    :param loudness_range_target: allowed range of loudness of audio volume
+    :param is_short: if flag is True then we add 30 second to beginning and after normalize delete it
     :return: - tuple 0 - list files 1 - concatenate filter
     """
 
@@ -64,7 +70,10 @@ def concat_command(
 
     loudnorm = loudnorm_filter(use_normalization, rms_level, peak, loudness_range_target)
 
-    concat_filter = f"concat=n={count}:v=0:a=1{volume_filter}{loudnorm}[book]"
+    if is_short and loudnorm:
+        concat_filter = f"concat=n={count}:v=0:a=1{volume_filter},adelay=30s{loudnorm},atrim=start=30[book]"
+    else:
+        concat_filter = f"concat=n={count}:v=0:a=1{volume_filter}{loudnorm}[book]"
 
     return concat_files, concat_filter
 
@@ -129,6 +138,7 @@ def concat_ffmpeg_command(
     rms_level: float = -18.0,
     loudness_range_target: float = 18.0,
     is_normalize: bool = True,
+    is_short: bool = False,
 ) -> List[str]:
     """
     Build command for ffmpeg which concatenate book parts to book and add background audio if need.
@@ -145,6 +155,7 @@ def concat_ffmpeg_command(
     :param rms_level: allowed root mean square of audio volume
     :param loudness_range_target: allowed range of loudness of audio volume
     :param is_normalize: flag for normalize or not audio
+    :param is_short: if flag is True then we add 30 second to beginning and after normalize delete it
     :return: completed ffmpeg command for shell
     """
 
@@ -157,7 +168,7 @@ def concat_ffmpeg_command(
         map_out = ["-map", "[book]"]
 
     concat_files, concat_filter = concat_command(
-        build_list, volume, use_normalization, rms_level, peak, loudness_range_target
+        build_list, volume, use_normalization, rms_level, peak, loudness_range_target, is_short
     )
 
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
@@ -342,6 +353,7 @@ def concatenate(
     rms_level: float = -18.0,
     loudness_range_target: float = 18.0,
     is_normalize: bool = True,
+    is_short: bool = False,
 ) -> Tuple[int, str, str]:
     """
 
@@ -357,6 +369,7 @@ def concatenate(
     :param rms_level: value of root mean square of loduness in concatenated audio
     :param loudness_range_target: value of target loudness range
     :param is_normalize: flag for normalize or not audio
+    :param is_short: if flag is True then we add 30 second to beginning and after normalize delete it
     :return: tuple which contain return code, output and error message
     """
 
@@ -374,6 +387,7 @@ def concatenate(
         rms_level=rms_level,
         loudness_range_target=loudness_range_target,
         is_normalize=is_normalize,
+        is_short=is_short,
     )
     status, file_path, er = res
     if status:

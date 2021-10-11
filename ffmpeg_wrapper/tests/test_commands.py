@@ -29,6 +29,25 @@ def test_concatenate_command():
     assert " ".join(command) == test_command
 
 
+def test_short_concatenate_command():
+    background_path = "background.wav"
+    background_volume = 0.3
+    volume = 2.0
+
+    test_command = """ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=2.0[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest:normalize=1 -ac 2 -ar 48000 -y complete_book.wav"""
+
+    command = concat_ffmpeg_command(
+        build_list=BUILD_LIST,
+        output_path=OUTPUT_PATH,
+        background_path=background_path,
+        background_volume=background_volume,
+        volume=volume,
+        is_short=True,
+    )
+
+    assert " ".join(command) == test_command
+
+
 def test_concatenate_loudnorm_command():
     background_path = "background.wav"
     background_volume = 0.3
@@ -55,6 +74,33 @@ def test_concatenate_loudnorm_command():
     assert " ".join(command) == test_command
 
 
+def test_short_concatenate_loudnorm_command():
+    background_path = "background.wav"
+    background_volume = 0.3
+    volume = 2.0
+    use_normalization = True
+    peak = -4
+    rms_level = -20
+    loudness_range_target = -20
+
+    command = concat_ffmpeg_command(
+        build_list=BUILD_LIST,
+        output_path=OUTPUT_PATH,
+        background_path=background_path,
+        background_volume=background_volume,
+        volume=volume,
+        use_normalization=use_normalization,
+        peak=peak,
+        rms_level=rms_level,
+        loudness_range_target=loudness_range_target,
+        is_short=True,
+    )
+
+    test_command = f"""ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=2.0,adelay=30s,loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target},atrim=start=30[book];amovie=background.wav:loop=0,asetpts=N/SR/TB,volume=0.3[background];[book][background]amix=duration=shortest:normalize=1 -ac 2 -ar 48000 -y complete_book.wav"""
+
+    assert " ".join(command) == test_command
+
+
 def test_simple_concatenate_command():
     use_normalization = True
     peak = -4
@@ -74,6 +120,26 @@ def test_simple_concatenate_command():
     assert " ".join(command) == test_command
 
 
+def test_short_simple_concatenate_command():
+    use_normalization = True
+    peak = -4
+    rms_level = -20
+    loudness_range_target = -20
+
+    command = concat_ffmpeg_command(
+        build_list=BUILD_LIST,
+        output_path=OUTPUT_PATH,
+        use_normalization=use_normalization,
+        peak=peak,
+        rms_level=rms_level,
+        loudness_range_target=loudness_range_target,
+        is_short=True,
+    )
+
+    test_command = f"""ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=1.0,adelay=30s,loudnorm=I={rms_level}:TP={peak}:LRA={loudness_range_target},atrim=start=30[book] -map [book] -ac 2 -ar 48000 -y complete_book.wav"""
+    assert " ".join(command) == test_command
+
+
 def test_simple_concatenate_loudnorm_command():
 
     command = concat_ffmpeg_command(
@@ -85,6 +151,17 @@ def test_simple_concatenate_loudnorm_command():
 
     assert " ".join(command) == test_command
 
+
+def test_short_simple_concatenate_loudnorm_command():
+    command = concat_ffmpeg_command(
+            build_list=BUILD_LIST,
+            output_path=OUTPUT_PATH,
+            is_short=True,
+        )
+
+    test_command = """ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=1.0[book] -map [book] -ac 2 -ar 48000 -y complete_book.wav"""
+
+    assert " ".join(command) == test_command
 
 def test_convert_command():
     input_info = (
