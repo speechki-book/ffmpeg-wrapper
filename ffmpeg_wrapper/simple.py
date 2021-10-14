@@ -335,10 +335,13 @@ def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, 
             out_str: str = out.decode("utf-8")
             err_str: str = err.decode("utf-8")
         except UnicodeDecodeError:
+            print(out)
+            print(err)
             out_str = ""
             err_str = ""
 
         status = process_handle.returncode
+        print(status)
     except CalledProcessError as cpe:
         raise FFMPEGWrapperException(return_code=cpe.returncode)
 
