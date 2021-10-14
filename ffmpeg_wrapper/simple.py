@@ -331,8 +331,13 @@ def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, 
             stdin=subprocess.PIPE,
         )
         out, err = process_handle.communicate()
-        out_str: str = out.decode("utf-8")
-        err_str: str = err.decode("utf-8")
+        try:
+            out_str: str = out.decode("utf-8")
+            err_str: str = err.decode("utf-8")
+        except UnicodeDecodeError:
+            out_str = ""
+            err_str = ""
+
         status = process_handle.returncode
     except CalledProcessError as cpe:
         raise FFMPEGWrapperException(return_code=cpe.returncode)
@@ -484,7 +489,11 @@ def volume_detect(path_to_file: str) -> Dict[str, float]:
             if "max_volume:" in r:
                 # line looks like '[Parsed_volumedetect_0 @ 0x153e3a880] max_volume: -0.0 dB'
                 result["max_volume"] = float(r.split(" ")[-2])
-    except (KeyError, IndexError, AttributeError) as e:
+    except (
+        KeyError,
+        IndexError,
+        AttributeError,
+    ) as e:
         raise FFMPEGWrapperParsingException("Error occurred while parsing FFMPEG output") from e
 
     return result

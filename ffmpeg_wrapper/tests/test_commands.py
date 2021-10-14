@@ -154,14 +154,15 @@ def test_simple_concatenate_loudnorm_command():
 
 def test_short_simple_concatenate_loudnorm_command():
     command = concat_ffmpeg_command(
-            build_list=BUILD_LIST,
-            output_path=OUTPUT_PATH,
-            is_short=True,
-        )
+        build_list=BUILD_LIST,
+        output_path=OUTPUT_PATH,
+        is_short=True,
+    )
 
     test_command = """ffmpeg -hide_banner -loglevel error -i 1.wav -i 2.wav -i 3.wav -i 4.wav -filter_complex concat=n=4:v=0:a=1,volume=1.0[book] -map [book] -ac 2 -ar 48000 -y complete_book.wav"""
 
     assert " ".join(command) == test_command
+
 
 def test_convert_command():
     input_info = (
