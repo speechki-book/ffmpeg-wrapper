@@ -323,12 +323,15 @@ def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, 
     :param kwargs: values which transferred to command_func
     :return: tuple which contain return code, output and error message
     """
+    cwd = kwargs.pop("cwd", None)
+
     try:
         process_handle = subprocess.Popen(
             command_func(*args, **kwargs),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
+            cwd=cwd
         )
         out, err = process_handle.communicate()
         out_str: str = out.decode("utf-8", "ignore")
