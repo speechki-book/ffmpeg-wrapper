@@ -1,0 +1,30 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  Run-Tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+
+      - name: Install poetry
+        run: pip3 install poetry
+
+      - name: Disable poetry env
+        run: poetry config virtualenvs.create false
+
+      - name: Install project requirements
+        run: poetry install
+
+      - name: Run tests
+        run: python -m pytest ffmpeg_wrapper/tests/

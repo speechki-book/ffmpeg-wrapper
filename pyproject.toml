@@ -2,7 +2,7 @@
 name = "ffmpeg_wrapper"
 version = "0.2"
 description = "wrapper for FFMPEG"
-authors = ["Pavel Maltsev zeden123@gmail.com"]
+authors = ["Pavel Maltsev <zeden123@gmail.com>"]
 readme = "README.md"
 homepage = "https://github.com/speechki-book/ffmpeg-wrapper"
 license = ""
