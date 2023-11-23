@@ -20,7 +20,7 @@ exclude = ["tests*"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pydantic = "*"
+pydantic = "<2"
 
 
 [tool.poetry.dev-dependencies]
