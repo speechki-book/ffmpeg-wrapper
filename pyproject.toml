@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ffmpeg_wrapper"
-version = "0.2"
+version = "0.2.1"
 description = "wrapper for FFMPEG"
 authors = ["Pavel Maltsev <zeden123@gmail.com>"]
 readme = "README.md"
