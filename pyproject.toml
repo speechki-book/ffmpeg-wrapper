@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ffmpeg_wrapper"
-version = "0.2.1"
+version = "0.2.2"
 description = "wrapper for FFMPEG"
 authors = ["Pavel Maltsev <zeden123@gmail.com>"]
 readme = "README.md"
@@ -20,7 +20,6 @@ exclude = ["tests*"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pydantic = "<2"
 
 
 [tool.poetry.dev-dependencies]
