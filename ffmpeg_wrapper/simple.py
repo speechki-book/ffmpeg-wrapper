@@ -1,19 +1,74 @@
 import subprocess
 from subprocess import CalledProcessError
-from typing import List, Optional, Tuple, Callable, Dict
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 
 class FFMPEGWrapperException(Exception):
+    MESSAGE_DETAIL_LIMIT = 500
+
     def __init__(
         self,
         out: Optional[str] = None,
         er: Optional[str] = None,
         return_code: Optional[int] = None,
+        command: Optional[Union[str, Sequence[str]]] = None,
     ):
-        msg_args = [f"FFMPEG failed with exit code {return_code}"]
-        super().__init__(self, *msg_args)
+        message = self._build_message(return_code=return_code, command=command, stderr=er)
+        super().__init__(message)
         self.out = out
         self.er = er
+        self.stdout = out
+        self.stderr = er
+        self.return_code = return_code
+        self.command = command
+
+    @classmethod
+    def _clip_detail(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+
+        clipped = value.strip()
+        if not clipped:
+            return None
+
+        if len(clipped) > cls.MESSAGE_DETAIL_LIMIT:
+            return f"{clipped[: cls.MESSAGE_DETAIL_LIMIT]}..."
+
+        return clipped
+
+    @staticmethod
+    def _stringify_command(
+        command: Optional[Union[str, Sequence[str]]],
+    ) -> Optional[str]:
+        if command is None:
+            return None
+
+        if isinstance(command, str):
+            command_str = command
+        else:
+            command_str = " ".join(str(part) for part in command)
+
+        command_str = command_str.strip()
+        return command_str or None
+
+    @classmethod
+    def _build_message(
+        cls,
+        return_code: Optional[int],
+        command: Optional[Union[str, Sequence[str]]],
+        stderr: Optional[str],
+    ) -> str:
+        parts = [f"FFMPEG failed with exit code {return_code}"]
+
+        command_str = cls._stringify_command(command)
+        if command_str:
+            parts.append(f"command: {command_str}")
+
+        stderr_str = cls._clip_detail(stderr)
+        if stderr_str:
+            parts.append(f"stderr: {stderr_str}")
+
+        return "; ".join(parts)
 
 
 class FFMPEGWrapperParsingException(Exception):
@@ -168,7 +223,13 @@ def concat_ffmpeg_command(
         map_out = ["-map", "[book]"]
 
     concat_files, concat_filter = concat_command(
-        build_list, volume, use_normalization, rms_level, peak, loudness_range_target, is_short
+        build_list,
+        volume,
+        use_normalization,
+        rms_level,
+        peak,
+        loudness_range_target,
+        is_short,
     )
 
     command = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
@@ -324,21 +385,30 @@ def execute_command(command_func: Callable, *args, **kwargs) -> Tuple[int, str, 
     :return: tuple which contain return code, output and error message
     """
     cwd = kwargs.pop("cwd", None)
+    command = command_func(*args, **kwargs)
 
     try:
         process_handle = subprocess.Popen(
-            command_func(*args, **kwargs),
+            command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
-            cwd=cwd
+            cwd=cwd,
         )
         out, err = process_handle.communicate()
         out_str: str = out.decode("utf-8", "ignore")
         err_str: str = err.decode("utf-8", "ignore")
         status = process_handle.returncode
     except CalledProcessError as cpe:
-        raise FFMPEGWrapperException(return_code=cpe.returncode)
+        stdout = getattr(cpe, "stdout", None)
+        stderr = getattr(cpe, "stderr", None)
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", "ignore")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", "ignore")
+        raise FFMPEGWrapperException(out=stdout, er=stderr, return_code=cpe.returncode, command=command)
+    except OSError as exc:
+        raise FFMPEGWrapperException(er=str(exc), return_code=getattr(exc, "errno", None), command=command) from exc
 
     return status, out_str, err_str
 
@@ -394,7 +464,22 @@ def concatenate(
     )
     status, file_path, er = res
     if status:
-        raise FFMPEGWrapperException(file_path, er, return_code=status)
+        command = concat_ffmpeg_command(
+            build_list=build_list,
+            output_path=output_path,
+            channels=channels,
+            background_path=background_path,
+            background_volume=background_volume,
+            volume=volume,
+            sample_rate=sample_rate,
+            use_normalization=use_normalization,
+            peak=peak,
+            rms_level=rms_level,
+            loudness_range_target=loudness_range_target,
+            is_normalize=is_normalize,
+            is_short=is_short,
+        )
+        raise FFMPEGWrapperException(file_path, er, return_code=status, command=command)
 
     return status, file_path, er
 
@@ -423,7 +508,8 @@ def convert(
     status, out, er = res
 
     if status:
-        raise FFMPEGWrapperException(out, er, return_code=status)
+        command = convert_ffmpeg_command(input_info=input_info, output_info=output_info, bit_rate=bit_rate)
+        raise FFMPEGWrapperException(out, er, return_code=status, command=command)
 
     return status, out, er
 
@@ -441,7 +527,8 @@ def duration(file_path: str) -> float:
     status, out, er = res
 
     if status:
-        raise FFMPEGWrapperException(out, er, return_code=status)
+        command = duration_ffmpeg_command(file_path)
+        raise FFMPEGWrapperException(out, er, return_code=status, command=command)
 
     try:
         return float(out)
@@ -467,7 +554,8 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
     status, out, er = res
 
     if status:
-        raise FFMPEGWrapperException(out, er, return_code=status)
+        command = silent_ffmpeg_command(duration_value, output_path)
+        raise FFMPEGWrapperException(out, er, return_code=status, command=command)
 
     return status, out, er
 
@@ -475,7 +563,8 @@ def silent(duration_value: float, output_path: str) -> Tuple[int, str, str]:
 def volume_detect(path_to_file: str) -> Dict[str, float]:
     status, out, er = execute_command(volume_detect_command, path_to_file=path_to_file)
     if status:
-        raise FFMPEGWrapperException(out, er, return_code=status)
+        command = volume_detect_command(path_to_file=path_to_file)
+        raise FFMPEGWrapperException(out, er, return_code=status, command=command)
 
     rows = (r for r in er.split("\n") if "Parsed_volumedetect" in r)
     result = {}

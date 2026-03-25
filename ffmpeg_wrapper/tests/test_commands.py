@@ -1,9 +1,14 @@
+import subprocess
+
+
 from ffmpeg_wrapper.simple import (
+    FFMPEGWrapperException,
     concat_ffmpeg_command,
+    convert,
     convert_ffmpeg_command,
     duration_ffmpeg_command,
-    silent_ffmpeg_command,
     normalize_ffmpeg_command,
+    silent_ffmpeg_command,
 )
 
 
@@ -233,3 +238,72 @@ def test_normalize_command():
     )
 
     assert " ".join(command) == expected_command
+
+
+def test_exception_stores_diagnostics():
+    command = ["ffmpeg", "-i", "broken.wav"]
+
+    exc = FFMPEGWrapperException("stdout text", "stderr text", return_code=3, command=command)
+
+    assert exc.out == "stdout text"
+    assert exc.stdout == "stdout text"
+    assert exc.er == "stderr text"
+    assert exc.stderr == "stderr text"
+    assert exc.return_code == 3
+    assert exc.command == command
+
+
+def test_exception_message_includes_return_code_stderr_and_command():
+    exc = FFMPEGWrapperException(
+        "stdout text",
+        "Invalid data found when processing input",
+        return_code=1,
+        command=["ffmpeg", "-i", "broken.wav"],
+    )
+
+    message = str(exc)
+
+    assert "exit code 1" in message
+    assert "Invalid data found when processing input" in message
+    assert "ffmpeg -i broken.wav" in message
+
+
+def test_convert_failure_raises_exception_with_diagnostics(monkeypatch):
+    input_info = ("complete_book.wav", "/tmp/complete_book.wav", "wav")
+    output_info = ("converted_book.mp3", "/tmp/converted_book.mp3", "mp3")
+
+    def mock_execute_command(*args, **kwargs):
+        return 7, "captured stdout", "captured stderr"
+
+    monkeypatch.setattr("ffmpeg_wrapper.simple.execute_command", mock_execute_command)
+
+    try:
+        convert(input_info=input_info, output_info=output_info, bit_rate=256)
+    except FFMPEGWrapperException as exc:
+        assert exc.stdout == "captured stdout"
+        assert exc.stderr == "captured stderr"
+        assert exc.return_code == 7
+        assert exc.command == convert_ffmpeg_command(input_info=input_info, output_info=output_info, bit_rate=256)
+        assert "exit code 7" in str(exc)
+        assert "captured stderr" in str(exc)
+    else:
+        raise AssertionError("FFMPEGWrapperException was not raised")
+
+
+def test_execute_command_wraps_process_startup_failures(monkeypatch):
+    from ffmpeg_wrapper.simple import execute_command
+
+    def mock_popen(*args, **kwargs):
+        raise FileNotFoundError(2, "No such file or directory", "ffmpeg")
+
+    monkeypatch.setattr(subprocess, "Popen", mock_popen)
+
+    try:
+        execute_command(lambda: ["ffmpeg", "-version"])
+    except FFMPEGWrapperException as exc:
+        assert exc.command == ["ffmpeg", "-version"]
+        assert exc.stderr is not None
+        assert "No such file or directory" in exc.stderr
+        assert "ffmpeg -version" in str(exc)
+    else:
+        raise AssertionError("FFMPEGWrapperException was not raised")
